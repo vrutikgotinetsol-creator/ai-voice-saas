@@ -1,0 +1,13 @@
+node_modules
+**/node_modules
+**/dist
+**/.env
+**/.env.*
+!.env.example
+**/*.log
+.git
+.github
+apps/admin-dashboard/dist
+apps/client-dashboard/dist
+*.md
+!supabase/README.md

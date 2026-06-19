@@ -1,0 +1,24 @@
+{
+  "name": "ai-receptionist-platform",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Multi-tenant AI Receptionist SaaS platform",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev:api": "npm run dev -w @platform/api",
+    "dev:admin": "npm run dev -w @platform/admin-dashboard",
+    "dev:client": "npm run dev -w @platform/client-dashboard",
+    "build": "npm run build:types && npm run build:api && npm run build:admin && npm run build:client",
+    "build:api": "npm run build -w @platform/api",
+    "build:admin": "npm run build -w @platform/admin-dashboard",
+    "build:client": "npm run build -w @platform/client-dashboard",
+    "build:types": "npm run build -w @platform/shared-types",
+    "typecheck": "npm run build:types && npm run build:api && npm run typecheck -w @platform/admin-dashboard && npm run typecheck -w @platform/client-dashboard"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}
