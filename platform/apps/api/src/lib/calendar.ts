@@ -20,7 +20,12 @@ function getCalendarClient() {
 }
 
 export async function getAvailableSlots(location: LocationSchedule, dateStr: string): Promise<string[]> {
-  const { calendar_id, timezone, open_time, close_time, days_open, appointment_duration_min } = location;
+  const timezone = location.timezone || 'America/New_York';
+  const open_time = location.open_time || '09:00';
+  const close_time = location.close_time || '17:00';
+  const days_open = location.days_open;
+  const appointment_duration_min = location.appointment_duration_min || 30;
+  const calendar_id = location.calendar_id;
 
   if (!calendar_id) {
     return generateMockSlots(location, dateStr);
@@ -64,7 +69,10 @@ export async function getAvailableSlots(location: LocationSchedule, dateStr: str
 }
 
 function generateMockSlots(location: LocationSchedule, dateStr: string): string[] {
-  const { timezone, open_time, close_time, appointment_duration_min } = location;
+  const timezone = location.timezone || 'America/New_York';
+  const open_time = location.open_time || '09:00';
+  const close_time = location.close_time || '17:00';
+  const appointment_duration_min = location.appointment_duration_min || 30;
   const dayStart = DateTime.fromISO(`${dateStr}T${open_time}`, { zone: timezone });
   const dayEnd = DateTime.fromISO(`${dateStr}T${close_time}`, { zone: timezone });
   const now = DateTime.now();
@@ -81,7 +89,9 @@ export async function createCalendarEvent(
   location: LocationSchedule,
   params: { summary: string; description: string; startISO: string },
 ) {
-  const { calendar_id, timezone, appointment_duration_min } = location;
+  const timezone = location.timezone || 'America/New_York';
+  const appointment_duration_min = location.appointment_duration_min || 30;
+  const calendar_id = location.calendar_id;
 
   if (!calendar_id) {
     const start = DateTime.fromISO(params.startISO, { zone: timezone });
@@ -129,9 +139,12 @@ export async function updateCalendarEventTime(
   if (!calendarEventId || calendarEventId.startsWith('mock_')) return;
   if (!location.calendar_id) return;
 
+  const timezone = location.timezone || 'America/New_York';
+  const appointment_duration_min = location.appointment_duration_min || 30;
+
   const calendar = getCalendarClient();
-  const start = DateTime.fromISO(startISO, { zone: location.timezone });
-  const end = start.plus({ minutes: location.appointment_duration_min });
+  const start = DateTime.fromISO(startISO, { zone: timezone });
+  const end = start.plus({ minutes: appointment_duration_min });
 
   await calendar.events.patch({
     calendarId: location.calendar_id,

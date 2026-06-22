@@ -130,7 +130,7 @@ async function resolveLocationByPhone(phoneNumberId: string | undefined) {
   return location;
 }
 
-async function handleAssistantRequest(_req: Request, res: Response, msg: Record<string, unknown>) {
+async function handleAssistantRequest(req: Request, res: Response, msg: Record<string, unknown>) {
   const phoneNumberId =
     (msg?.phoneNumber as { id?: string })?.id ||
     (msg?.call as { phoneNumberId?: string; phoneNumber?: { id?: string } })?.phoneNumberId ||
@@ -157,7 +157,11 @@ async function handleAssistantRequest(_req: Request, res: Response, msg: Record<
     supabaseAdmin.from('faqs').select('*').eq('business_id', business.id).order('sort_order'),
   ]);
 
-  const publicApiUrl = (env.PUBLIC_API_URL || '').replace(/\/$/, '');
+  let publicApiUrl = (env.PUBLIC_API_URL || '').replace(/\/$/, '');
+  if (!publicApiUrl || publicApiUrl.includes('localhost')) {
+    const protocol = req.headers['x-forwarded-proto'] || 'https';
+    publicApiUrl = `${protocol}://${req.headers.host}`;
+  }
   const toolUrl = `${publicApiUrl}/webhook/vapi/tools?bid=${business.id}&lid=${location.id}`;
 
   return res.json({
@@ -208,13 +212,29 @@ function inactiveAssistant() {
 }
 
 async function handleToolCalls(req: Request, res: Response, msg: Record<string, unknown>) {
-  const businessId = req.query.bid as string;
-  const locationId = req.query.lid as string;
+  let businessId = req.query.bid as string;
+  let locationId = req.query.lid as string;
 
-  const [{ data: business }, { data: location }] = await Promise.all([
-    supabaseAdmin.from('businesses').select('*').eq('id', businessId).maybeSingle(),
-    supabaseAdmin.from('locations').select('*').eq('id', locationId).maybeSingle(),
-  ]);
+  let business: any = null;
+  let location: any = null;
+
+  if (businessId && locationId) {
+    const [{ data: b }, { data: l }] = await Promise.all([
+      supabaseAdmin.from('businesses').select('*').eq('id', businessId).maybeSingle(),
+      supabaseAdmin.from('locations').select('*').eq('id', locationId).maybeSingle(),
+    ]);
+    business = b;
+    location = l;
+  } else {
+    const phoneNumberId = (msg?.call as { phoneNumberId?: string })?.phoneNumberId;
+    if (phoneNumberId) {
+      const loc = await resolveLocationByPhone(phoneNumberId);
+      if (loc) {
+        location = loc;
+        business = loc.businesses;
+      }
+    }
+  }
 
   const toolCalls = (msg?.toolCallList as Array<{ id: string; function?: { name?: string; arguments?: string | Record<string, unknown> } }>) || [];
   const results: { toolCallId: string; result: string }[] = [];
@@ -257,8 +277,9 @@ async function toolCheckAvailability(location: LocationWithSecrets, args: { date
   if (slots.length === 0) {
     return `No slots available on ${args.date}. Suggest checking the next business day.`;
   }
+  const timezone = location.timezone || 'America/New_York';
   const readable = slots.slice(0, 4).map((iso) =>
-    DateTime.fromISO(iso, { zone: location.timezone }).toFormat('h:mm a'),
+    DateTime.fromISO(iso, { zone: timezone }).toFormat('h:mm a'),
   ).join(', ');
   const isoList = slots.slice(0, 4).join(' | ');
   return `Available times on ${args.date}: ${readable}. ISO values for booking: ${isoList}`;
@@ -310,7 +331,8 @@ async function toolBookAppointment(
     await supabaseAdmin.from('appointments').update({ confirmation_sms_sent: true }).eq('id', appt.id);
   }
 
-  const readableTime = DateTime.fromISO(args.startTime, { zone: location.timezone }).toLocaleString(
+  const timezone = location.timezone || 'America/New_York';
+  const readableTime = DateTime.fromISO(args.startTime, { zone: timezone }).toLocaleString(
     DateTime.DATETIME_MED,
   );
   return `Appointment confirmed! ${args.customerName} is booked for ${args.service} on ${readableTime}.`;
@@ -339,7 +361,8 @@ async function toolCancelAppointment(
   await deleteCalendarEvent(location, appt.calendar_event_id);
   await sendSms({ ...location, name: business.name }, appt, 'cancellation').catch(console.error);
 
-  const time = DateTime.fromISO(appt.start_time, { zone: location.timezone }).toLocaleString(DateTime.DATETIME_MED);
+  const timezone = location.timezone || 'America/New_York';
+  const time = DateTime.fromISO(appt.start_time, { zone: timezone }).toLocaleString(DateTime.DATETIME_MED);
   return `Appointment for ${appt.customer_name} on ${time} has been cancelled.`;
 }
 
