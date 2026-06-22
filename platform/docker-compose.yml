@@ -1,0 +1,29 @@
+# Local development — API only (Supabase is hosted; frontends run via Vite)
+#
+# Usage:
+#   cp apps/api/.env.example apps/api/.env   # fill in values
+#   docker compose up --build
+#
+# Frontends (separate terminals):
+#   npm run dev:admin    → http://localhost:5173
+#   npm run dev:client   → http://localhost:5174
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    ports:
+      - "3001:3001"
+    env_file:
+      - apps/api/.env
+    environment:
+      NODE_ENV: production
+      PORT: 3001
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:3001/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
