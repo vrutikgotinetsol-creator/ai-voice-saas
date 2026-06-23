@@ -93,6 +93,10 @@ function buildTools(toolUrl: string) {
 }
 
 router.post('/vapi', async (req: Request, res: Response) => {
+
+  console.log('[Vapi webhook raw]*********************************', JSON.stringify(req.body, null, 2));
+
+  console.log('[Vapi webhook raw]*********************************');
   const msg = req.body?.message || req.body;
   const type = msg?.type;
 
@@ -138,6 +142,7 @@ async function resolveLocationByPhone(phoneNumberId: string | undefined) {
 }
 
 async function handleAssistantRequest(req: Request, res: Response, msg: Record<string, unknown>) {
+
   const phoneNumberId =
     (msg?.phoneNumber as { id?: string })?.id ||
     (msg?.call as { phoneNumberId?: string; phoneNumber?: { id?: string } })?.phoneNumberId ||
