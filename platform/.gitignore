@@ -8,3 +8,5 @@ build/
 .DS_Store
 .turbo
 .vercel
+ai-voice-saas.env
+vapi-fix/fix/.env.production

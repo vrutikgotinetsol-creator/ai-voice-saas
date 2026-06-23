@@ -183,6 +183,8 @@ async function handleAssistantRequest(req: Request, res: Response, msg: Record<s
   }
   const toolUrl = `${publicApiUrl}/webhook/vapi/tools?bid=${business.id}&lid=${location.id}`;
 
+  console.log('🔥🔥🔥 ASSISTANT REQUEST RECEIVED 🔥🔥🔥');
+
   return res.json({
     assistant: {
       name: `${business.name} Receptionist`,
