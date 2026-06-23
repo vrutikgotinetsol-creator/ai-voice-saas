@@ -10,3 +10,5 @@ build/
 .vercel
 ai-voice-saas.env
 vapi-fix/fix/.env.production
+ai-voice-saas.env
+vapi-fix/fix/.env.production

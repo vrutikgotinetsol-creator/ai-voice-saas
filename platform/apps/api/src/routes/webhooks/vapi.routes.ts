@@ -96,9 +96,11 @@ router.post('/vapi', async (req: Request, res: Response) => {
 
   console.log('[Vapi webhook raw]*********************************', JSON.stringify(req.body, null, 2));
 
-  console.log('[Vapi webhook raw]*********************************');
+
   const msg = req.body?.message || req.body;
   const type = msg?.type;
+  console.log("type", type);
+  console.log('[Vapi webhook raw]*********************************');
 
   try {
     if (type === 'assistant-request') return await handleAssistantRequest(req, res, msg);
