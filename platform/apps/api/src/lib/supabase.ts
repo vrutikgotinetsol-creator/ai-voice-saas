@@ -5,7 +5,7 @@ import { env } from '../config/env';
 const clientOptions = {
   auth: { autoRefreshToken: false, persistSession: false },
   // Node.js 18 lacks native WebSocket — required by @supabase/realtime-js
-  realtime: { transport: ws as unknown as typeof WebSocket },
+  realtime: { transport: ws as any },
 };
 
 /**
