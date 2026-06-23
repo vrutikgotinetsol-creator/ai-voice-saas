@@ -10,6 +10,7 @@ import {
   CreditCard,
   Settings,
   LogOut,
+  Sparkles
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/useAuth';
@@ -18,12 +19,12 @@ import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 
 const navItems = [
-  { to: '/', label: 'Home', icon: LayoutDashboard, end: true },
+  { to: '/', label: 'Overview', icon: LayoutDashboard, end: true },
   { to: '/appointments', label: 'Appointments', icon: CalendarDays },
   { to: '/calendar', label: 'Calendar', icon: Calendar },
   { to: '/customers', label: 'Customers', icon: Users },
   { to: '/leads', label: 'Leads', icon: UserPlus },
-  { to: '/calls', label: 'Calls', icon: Phone },
+  { to: '/calls', label: 'Call Logs', icon: Phone },
   { to: '/analytics', label: 'AI Analytics', icon: BarChart3 },
   { to: '/billing', label: 'Billing', icon: CreditCard },
   { to: '/settings', label: 'Settings', icon: Settings },
@@ -34,19 +35,21 @@ export function ClientLayout() {
   const navigate = useNavigate();
 
   return (
-    <div className="flex min-h-screen bg-background">
-      <aside className="hidden w-60 flex-col border-r border-border/50 bg-card lg:flex">
-        <div className="flex h-16 items-center gap-2 px-5">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
-            <Phone className="h-4 w-4 text-primary-foreground" />
+    <div className="flex min-h-screen w-full bg-transparent">
+      <aside className="hidden w-[280px] flex-col border-r border-white/40 bg-white/40 backdrop-blur-3xl lg:flex z-10 shadow-[4px_0_24px_-12px_rgba(0,0,0,0.1)]">
+        <div className="flex h-20 items-center gap-3 px-6">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-accent shadow-lg shadow-primary/20">
+            <Sparkles className="h-5 w-5 text-white" />
           </div>
           <div className="min-w-0">
-            <p className="truncate text-sm font-semibold">{business?.name}</p>
-            <p className="text-xs text-muted-foreground">Business Dashboard</p>
+            <p className="truncate text-base font-black tracking-tight text-foreground">{business?.name || 'Loading...'}</p>
+            <p className="text-[11px] font-bold text-primary uppercase tracking-widest opacity-80">AI Dashboard</p>
           </div>
         </div>
-        <Separator />
-        <nav className="flex-1 space-y-0.5 p-3">
+        
+        <Separator className="bg-white/40" />
+        
+        <div className="flex-1 overflow-y-auto py-6 px-4 space-y-1.5 custom-scrollbar">
           {navItems.map(({ to, label, icon: Icon, end }) => (
             <NavLink
               key={to}
@@ -54,32 +57,47 @@ export function ClientLayout() {
               end={end}
               className={({ isActive }) =>
                 cn(
-                  'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
+                  'group flex items-center gap-3.5 rounded-2xl px-4 py-3 text-sm font-semibold transition-all duration-300',
                   isActive
-                    ? 'bg-primary/10 text-primary'
-                    : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground',
+                    ? 'bg-white shadow-sm text-primary ring-1 ring-white/50 transform scale-[1.02]'
+                    : 'text-muted-foreground hover:bg-white/50 hover:text-foreground hover:scale-[1.01]',
                 )
               }
             >
-              <Icon className="h-4 w-4 shrink-0" />
-              {label}
+              {({ isActive }) => (
+                <>
+                  <Icon className={cn("h-5 w-5 transition-transform duration-300 group-hover:scale-110", isActive ? "text-primary" : "opacity-70 group-hover:opacity-100")} />
+                  {label}
+                </>
+              )}
             </NavLink>
           ))}
-        </nav>
-        <div className="border-t border-border/50 p-4">
+        </div>
+
+        <div className="border-t border-white/40 bg-white/30 p-5 backdrop-blur-md">
           {business?.status === 'trial' && (
-            <Badge variant="secondary" className="mb-2 w-full justify-center">
-              Trial
+            <Badge variant="outline" className="mb-4 w-full justify-center py-2 border-primary/20 text-primary bg-primary/5 shadow-sm font-bold text-xs">
+              Trial Active
             </Badge>
           )}
-          <p className="truncate text-xs text-muted-foreground">{user?.email}</p>
-          <Button variant="ghost" size="sm" className="mt-2 w-full justify-start gap-2" onClick={async () => { await signOut(); navigate('/login'); }}>
+          
+          <div className="flex flex-col gap-1 mb-4 px-2">
+            <p className="truncate text-sm font-bold text-foreground">Account</p>
+            <p className="truncate text-xs font-medium text-muted-foreground">{user?.email}</p>
+          </div>
+          
+          <Button 
+            variant="ghost" 
+            className="w-full justify-start gap-2.5 bg-white/50 hover:bg-white hover:text-destructive hover:shadow-sm transition-all duration-300 rounded-xl font-bold py-5" 
+            onClick={async () => { await signOut(); navigate('/login'); }}
+          >
             <LogOut className="h-4 w-4" /> Sign out
           </Button>
         </div>
       </aside>
-      <div className="flex flex-1 flex-col">
-        <main className="flex-1 overflow-auto p-4 md:p-6">
+      
+      <div className="flex flex-1 flex-col relative w-full overflow-hidden">
+        <main className="flex-1 overflow-y-auto p-4 md:p-8 lg:p-10 w-full max-w-7xl mx-auto custom-scrollbar">
           <Outlet />
         </main>
       </div>

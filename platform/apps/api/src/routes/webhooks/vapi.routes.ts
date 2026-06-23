@@ -117,6 +117,13 @@ router.post('/vapi/tools', async (req: Request, res: Response) => {
   }
 });
 
+router.get('/vapi', (_req, res) => {
+  res.json({
+    success: true,
+    route: 'vapi'
+  });
+});
+
 async function resolveLocationByPhone(phoneNumberId: string | undefined) {
   if (!phoneNumberId) return null;
 
@@ -139,15 +146,22 @@ async function handleAssistantRequest(req: Request, res: Response, msg: Record<s
 
   console.log(`[Vapi] assistant-request | phoneNumberId: ${phoneNumberId}`);
 
-  if (!phoneNumberId) return res.json(fallbackAssistant());
+  if (!phoneNumberId) {
+    console.warn('[Vapi] No phoneNumberId found in request');
+    return res.json(fallbackAssistant());
+  }
 
   const location = await resolveLocationByPhone(phoneNumberId as string);
-  if (!location?.businesses) {
-    console.warn(`[Vapi] No location matched for phoneNumberId: ${phoneNumberId}`);
+  if (!location) {
+    console.warn(`[Vapi] No location matched for phoneNumberId: ${phoneNumberId}. Make sure this ID is in your 'locations' table.`);
     return res.json(fallbackAssistant());
   }
 
   const business = location.businesses as Business;
+  if (!business) {
+    console.warn(`[Vapi] Location ${location.id} has no associated business`);
+    return res.json(fallbackAssistant());
+  }
   if (business.status === 'suspended' || business.status === 'cancelled') {
     return res.json(inactiveAssistant());
   }
@@ -170,7 +184,7 @@ async function handleAssistantRequest(req: Request, res: Response, msg: Record<s
       firstMessage: `Thank you for calling ${business.name}. This is ${business.agent_name || 'Riya'}. How can I help you today?`,
       model: {
         provider: 'anthropic',
-        model: 'claude-haiku-4-5-20251001',
+        model: 'claude-3-5-haiku-20241022',
         messages: [{ role: 'system', content: buildSystemPrompt(business, location, services || [], faqs || []) }],
         tools: buildTools(toolUrl),
         temperature: 0.3,
@@ -188,10 +202,10 @@ function fallbackAssistant() {
       firstMessage: 'Hello, thanks for calling. We are getting set up — please try again shortly.',
       model: {
         provider: 'anthropic',
-        model: 'claude-haiku-4-5-20251001',
+        model: 'claude-3-5-haiku-20241022',
         messages: [{ role: 'system', content: 'Business not configured. Politely take name and number for follow-up.' }],
       },
-      voice: { provider: 'vapi', voiceId: 'Elliot' },
+      voice: { provider: 'vapi', voiceId: env.DEFAULT_VOICE_ID },
     },
   };
 }
@@ -203,10 +217,10 @@ function inactiveAssistant() {
       firstMessage: `Thanks for calling. We're temporarily unable to take calls — please try again later.`,
       model: {
         provider: 'anthropic',
-        model: 'claude-haiku-4-5-20251001',
+        model: 'claude-3-5-haiku-20241022',
         messages: [{ role: 'system', content: 'Account inactive. Politely tell caller to try again later.' }],
       },
-      voice: { provider: 'vapi', voiceId: 'Elliot' },
+      voice: { provider: 'vapi', voiceId: env.DEFAULT_VOICE_ID },
     },
   };
 }
@@ -238,6 +252,8 @@ async function handleToolCalls(req: Request, res: Response, msg: Record<string, 
 
   const toolCalls = (msg?.toolCallList as Array<{ id: string; function?: { name?: string; arguments?: string | Record<string, unknown> } }>) || [];
   const results: { toolCallId: string; result: string }[] = [];
+
+  console.log(`[Vapi] tool-calls | count: ${toolCalls.length} | businessId: ${businessId} | locationId: ${locationId}`);
 
   for (const call of toolCalls) {
     let result: string;

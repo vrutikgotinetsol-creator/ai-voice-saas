@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useMutation } from '@tanstack/react-query';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Eye, EyeOff } from 'lucide-react';
 import { adminApi } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -19,6 +19,8 @@ export function CreateClientPage() {
   const navigate = useNavigate();
   const [error, setError] = useState('');
   const [credentials, setCredentials] = useState<{ email: string; password: string } | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showTwilioToken, setShowTwilioToken] = useState(false);
 
   const [form, setForm] = useState({
     name: '',
@@ -166,13 +168,23 @@ export function CreateClientPage() {
             </div>
             <div className="space-y-2">
               <Label>Temporary Password *</Label>
-              <Input
-                type="password"
-                value={form.ownerPassword}
-                onChange={(e) => update('ownerPassword', e.target.value)}
-                minLength={8}
-                required
-              />
+              <div className="relative">
+                <Input
+                  type={showPassword ? 'text' : 'password'}
+                  value={form.ownerPassword}
+                  onChange={(e) => update('ownerPassword', e.target.value)}
+                  minLength={8}
+                  className="pr-10"
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                >
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -211,11 +223,21 @@ export function CreateClientPage() {
             </div>
             <div className="space-y-2">
               <Label>Twilio Auth Token</Label>
-              <Input
-                type="password"
-                value={form.twilio_auth_token}
-                onChange={(e) => update('twilio_auth_token', e.target.value)}
-              />
+              <div className="relative">
+                <Input
+                  type={showTwilioToken ? 'text' : 'password'}
+                  value={form.twilio_auth_token}
+                  onChange={(e) => update('twilio_auth_token', e.target.value)}
+                  className="pr-10"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowTwilioToken(!showTwilioToken)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                >
+                  {showTwilioToken ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
             </div>
             <div className="space-y-2">
               <Label>Twilio SMS From</Label>

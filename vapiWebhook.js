@@ -116,10 +116,10 @@ async function handleAssistantRequest(req, res, msg) {
         firstMessage: `Thanks for calling. We're temporarily unable to take calls — please try again later.`,
         model: {
           provider: 'anthropic',
-          model: 'claude-haiku-4-5-20251001',
+          model: 'claude-3-5-haiku-20241022',
           messages: [{ role: 'system', content: 'The business account is inactive. Politely tell the caller to try again later and take a message.' }],
         },
-        voice: { provider: 'vapi', voiceId: 'Elliot' },
+        voice: { provider: 'vapi', voiceId: process.env.DEFAULT_VOICE_ID || 'Elliot' },
       },
     });
   }
@@ -138,7 +138,7 @@ async function handleAssistantRequest(req, res, msg) {
       firstMessage: `Thank you for calling ${business.name}. This is ${business.agent_name || 'Riya'}. How can I help you today?`,
       model: {
         provider: 'anthropic',
-        model: 'claude-haiku-4-5-20251001',
+        model: 'claude-3-5-haiku-20241022',
         messages: [{ role: 'system', content: buildSystemPrompt(business, services, faqs) }],
         tools: buildTools(toolUrl),
         temperature: 0.3,
@@ -156,10 +156,10 @@ function fallbackAssistant() {
       firstMessage: 'Hello, thanks for calling. We are getting set up — please try again shortly.',
       model: {
         provider: 'anthropic',
-        model: 'claude-haiku-4-5-20251001',
+        model: 'claude-3-5-haiku-20241022',
         messages: [{ role: 'system', content: 'The business is not configured yet. Politely tell the caller someone will follow up, and take their name and number.' }],
       },
-      voice: { provider: 'vapi', voiceId: 'Elliot' },
+      voice: { provider: 'vapi', voiceId: process.env.DEFAULT_VOICE_ID || 'Elliot' },
     },
   };
 }

@@ -4,46 +4,243 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 224 71% 4%;
+    --background: 210 50% 98%;
+    --foreground: 222.2 84% 4.9%;
     --card: 0 0% 100%;
-    --card-foreground: 224 71% 4%;
-    --primary: 160 84% 39%;
-    --primary-foreground: 0 0% 100%;
-    --secondary: 220 14% 96%;
-    --secondary-foreground: 224 71% 4%;
-    --muted: 220 14% 96%;
-    --muted-foreground: 220 9% 46%;
-    --accent: 220 14% 96%;
-    --accent-foreground: 224 71% 4%;
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 220 13% 91%;
-    --input: 220 13% 91%;
-    --ring: 160 84% 39%;
-    --radius: 0.625rem;
-  }
-  .dark {
-    --background: 224 71% 4%;
-    --foreground: 213 31% 91%;
-    --card: 224 47% 8%;
-    --card-foreground: 213 31% 91%;
-    --primary: 160 70% 45%;
-    --primary-foreground: 0 0% 100%;
-    --secondary: 215 28% 12%;
-    --secondary-foreground: 213 31% 91%;
-    --muted: 215 28% 12%;
-    --muted-foreground: 215 20% 55%;
-    --accent: 215 28% 14%;
-    --accent-foreground: 213 31% 91%;
-    --destructive: 0 63% 45%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 215 28% 16%;
-    --input: 215 28% 16%;
-    --ring: 160 70% 45%;
+    --card-foreground: 222.2 84% 4.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+    /* Vibrant Indigo Primary */
+    --primary: 243 75% 59%;
+    --primary-foreground: 210 40% 98%;
+    /* Soft Blue Secondary */
+    --secondary: 214 95% 93%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+    /* Vibrant Pink Accent */
+    --accent: 330 81% 60%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 243 75% 59%;
+    --radius: 1rem;
   }
 }
+
 @layer base {
-  * { @apply border-border; }
-  body { @apply bg-background text-foreground antialiased; }
+  * { 
+    @apply border-border; 
+  }
+  body { 
+    @apply bg-background text-foreground antialiased selection:bg-primary/20 selection:text-primary min-h-screen relative overflow-x-hidden;
+  }
+
+  /* Animated Flowing Gradient Background */
+  body::before {
+    content: '';
+    position: fixed;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle at 15% 50%, rgba(79, 70, 229, 0.08), transparent 25%),
+                radial-gradient(circle at 85% 30%, rgba(236, 72, 153, 0.08), transparent 25%),
+                radial-gradient(circle at 50% 80%, rgba(14, 165, 233, 0.08), transparent 25%);
+    background-size: 100% 100%;
+    animation: flowBackground 15s ease-in-out infinite alternate;
+    z-index: -1;
+    pointer-events: none;
+  }
+
+  @keyframes flowBackground {
+    0% { transform: translate(0, 0) scale(1); }
+    50% { transform: translate(-2%, 2%) scale(1.05); }
+    100% { transform: translate(2%, -2%) scale(1); }
+  }
+
+  /* Sleek Scrollbar */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    @apply bg-primary/20 rounded-full transition-colors hover:bg-primary/40;
+  }
+}
+
+/* ──────────────────────────────────────────────────────────────────────── */
+/* FullCalendar Premium Overrides                                           */
+/* ──────────────────────────────────────────────────────────────────────── */
+.fc {
+  --fc-border-color: hsl(var(--border) / 0.5) !important;
+  --fc-daygrid-event-dot-width: 8px !important;
+  --fc-today-bg-color: hsl(var(--primary) / 0.05) !important;
+  --fc-page-bg-color: transparent !important;
+  --fc-neutral-bg-color: transparent !important;
+  font-family: inherit !important;
+}
+
+.fc-theme-standard th {
+  @apply text-muted-foreground font-semibold py-3 border-none bg-primary/5 tracking-wide uppercase text-xs;
+}
+
+.fc-theme-standard td, .fc-theme-standard th {
+  border-color: var(--fc-border-color) !important;
+}
+
+.fc .fc-toolbar.fc-header-toolbar {
+  @apply mb-6 gap-4;
+}
+
+.fc .fc-toolbar-title {
+  @apply text-xl font-bold text-foreground tracking-tight;
+}
+
+.fc .fc-button-primary {
+  @apply bg-white text-foreground border border-border/80 shadow-sm transition-all hover:bg-secondary hover:border-primary/30 hover:text-primary active:scale-95 focus:ring-2 focus:ring-primary/20 focus:outline-none capitalize font-medium text-sm rounded-lg px-5 py-2 !important;
+}
+
+.fc .fc-button-primary:not(:disabled).fc-button-active,
+.fc .fc-button-primary:not(:disabled):active {
+  @apply bg-primary text-primary-foreground border-primary shadow-md shadow-primary/20 !important;
+}
+
+.fc-direction-ltr .fc-button-group > .fc-button {
+  @apply rounded-none first:rounded-l-lg last:rounded-r-lg !important;
+}
+
+.fc .fc-timegrid-slot-label-cushion {
+  @apply text-xs text-muted-foreground font-semibold pr-3;
+}
+
+.fc-v-event {
+  @apply border-none shadow-sm transition-all duration-300 hover:shadow-lg hover:-translate-y-1 rounded-lg overflow-hidden !important;
+}
+
+.fc-event-main {
+  @apply px-2 py-1.5 flex flex-col gap-0.5 w-full h-full;
+}
+
+.fc-timegrid-event .fc-event-time {
+  @apply text-[10px] font-bold opacity-90 tracking-wide;
+}
+
+.fc-timegrid-event .fc-event-title {
+  @apply text-xs font-semibold leading-tight truncate;
+}
+
+.fc-daygrid-event {
+  @apply rounded-md shadow-sm transition-all duration-300 hover:shadow-md hover:-translate-y-0.5 !important;
+}
+
+.fc .fc-highlight {
+  background: hsl(var(--primary) / 0.1) !important;
+}
+
+.fc-timegrid-now-indicator-line {
+  @apply border-accent border-t-2 shadow-[0_0_10px_hsl(var(--accent))];
+}
+
+.fc-timegrid-now-indicator-arrow {
+  @apply border-accent border-[5px];
+}
+
+.fc .fc-scrollgrid {
+  @apply border-none rounded-2xl overflow-hidden shadow-sm bg-white/50 backdrop-blur-md;
+}
+
+.fc-event {
+  @apply cursor-pointer;
+}
+
+/* ──────────────────────────────────────────────────────────────────────── */
+/* FullCalendar Premium Overrides                                           */
+/* ──────────────────────────────────────────────────────────────────────── */
+.fc {
+  --fc-border-color: hsl(var(--border) / 0.5) !important;
+  --fc-daygrid-event-dot-width: 8px !important;
+  --fc-today-bg-color: hsl(var(--primary) / 0.05) !important;
+  --fc-page-bg-color: transparent !important;
+  --fc-neutral-bg-color: transparent !important;
+  font-family: inherit !important;
+}
+
+.fc-theme-standard th {
+  @apply text-muted-foreground font-medium py-3 border-none bg-secondary/30 tracking-wide uppercase text-xs;
+}
+
+.fc-theme-standard td, .fc-theme-standard th {
+  border-color: var(--fc-border-color) !important;
+}
+
+.fc .fc-toolbar.fc-header-toolbar {
+  @apply mb-6 gap-4;
+}
+
+.fc .fc-toolbar-title {
+  @apply text-xl font-semibold text-foreground tracking-tight;
+}
+
+.fc .fc-button-primary {
+  @apply bg-card text-foreground border border-border/60 shadow-sm transition-all hover:bg-secondary hover:border-border hover:text-foreground active:scale-95 focus:ring-2 focus:ring-primary/20 focus:outline-none capitalize font-medium text-sm rounded-md px-4 py-2 !important;
+}
+
+.fc .fc-button-primary:not(:disabled).fc-button-active,
+.fc .fc-button-primary:not(:disabled):active {
+  @apply bg-primary text-primary-foreground border-primary shadow-md !important;
+}
+
+.fc-direction-ltr .fc-button-group > .fc-button {
+  @apply rounded-none first:rounded-l-md last:rounded-r-md !important;
+}
+
+.fc .fc-timegrid-slot-label-cushion {
+  @apply text-xs text-muted-foreground font-medium pr-3;
+}
+
+.fc-v-event {
+  @apply border-none shadow-sm transition-all duration-200 hover:shadow-md hover:brightness-110 hover:-translate-y-px rounded-md overflow-hidden !important;
+}
+
+.fc-event-main {
+  @apply px-2 py-1.5 flex flex-col gap-0.5 w-full h-full;
+}
+
+.fc-timegrid-event .fc-event-time {
+  @apply text-[10px] font-semibold opacity-90;
+}
+
+.fc-timegrid-event .fc-event-title {
+  @apply text-xs font-medium leading-tight truncate;
+}
+
+.fc-daygrid-event {
+  @apply rounded-sm shadow-sm transition-all hover:brightness-110 !important;
+}
+
+.fc .fc-highlight {
+  background: hsl(var(--primary) / 0.1) !important;
+}
+
+.fc-timegrid-now-indicator-line {
+  @apply border-primary border-t-2;
+}
+
+.fc-timegrid-now-indicator-arrow {
+  @apply border-primary border-[5px];
+}
+
+.fc .fc-scrollgrid {
+  @apply border-none rounded-xl overflow-hidden;
+}
+
+/* Event Tooltip / Detail tweaks */
+.fc-event {
+  @apply cursor-pointer;
 }
