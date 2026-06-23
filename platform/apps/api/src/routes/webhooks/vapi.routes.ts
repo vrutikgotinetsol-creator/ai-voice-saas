@@ -103,7 +103,8 @@ router.post('/vapi', async (req: Request, res: Response) => {
   console.log('[Vapi webhook raw]*********************************');
 
   try {
-    if (type === 'assistant-request') return await handleAssistantRequest(req, res, msg);
+    // if (type === 'assistant-request') return await handleAssistantRequest(req, res, msg);
+    if (type === 'assistant.started') return await handleAssistantRequest(req, res, msg);
     if (type === 'tool-calls') return await handleToolCalls(req, res, msg);
     if (type === 'end-of-call-report') return await handleEndOfCall(req, res, msg);
     return res.json({ received: true });
