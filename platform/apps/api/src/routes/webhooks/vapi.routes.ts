@@ -93,20 +93,36 @@ function buildTools(toolUrl: string) {
 }
 
 router.post('/vapi', async (req: Request, res: Response) => {
-
-  console.log('[Vapi webhook raw]*********************************', JSON.stringify(req.body, null, 2));
-
-
   const msg = req.body?.message || req.body;
   const type = msg?.type;
-  console.log("type", type);
-  console.log('[Vapi webhook raw]*********************************');
+
+  // ── Detailed incoming log ──────────────────────────────────────────────────
+  const phoneId =
+    (msg?.phoneNumber as any)?.id ||
+    (msg?.call as any)?.phoneNumberId ||
+    'unknown';
+
+  console.log(`\n${'═'.repeat(60)}`);
+  console.log(`[Vapi] INCOMING  type="${type}"  phoneId="${phoneId}"`);
+  console.log(`[Vapi] timestamp=${msg?.timestamp || 'n/a'}`);
+  if (type === 'assistant-request') {
+    console.log(`[Vapi] ✅ assistant-request received — building dynamic assistant`);
+  } else if (type === 'tool-calls') {
+    const calls = (msg?.toolCallList || []) as any[];
+    console.log(`[Vapi] 🔧 tool-calls received — tools: ${calls.map((c: any) => c.function?.name).join(', ')}`);
+  } else if (type === 'end-of-call-report') {
+    console.log(`[Vapi] 📞 call ended — cost: $${msg?.cost || 0}, reason: ${msg?.endedReason || 'n/a'}`);
+  } else {
+    console.log(`[Vapi] ⚡ event type "${type}" — acknowledging`);
+  }
+  console.log(`${'═'.repeat(60)}\n`);
 
   try {
-    // if (type === 'assistant-request') return await handleAssistantRequest(req, res, msg);
-    if (type === 'assistant.started') return await handleAssistantRequest(req, res, msg);
+    // ✅ CORRECT: Vapi sends type="assistant-request" for dynamic assistant injection
+    if (type === 'assistant-request') return await handleAssistantRequest(req, res, msg);
     if (type === 'tool-calls') return await handleToolCalls(req, res, msg);
     if (type === 'end-of-call-report') return await handleEndOfCall(req, res, msg);
+    // All other event types (status-update, etc.) — just acknowledge
     return res.json({ received: true });
   } catch (err) {
     console.error('[Vapi webhook error]', err);
@@ -185,6 +201,10 @@ async function handleAssistantRequest(req: Request, res: Response, msg: Record<s
     publicApiUrl = `${protocol}://${req.headers.host}`;
   }
   const toolUrl = `${publicApiUrl}/webhook/vapi/tools?bid=${business.id}&lid=${location.id}`;
+
+  console.log(`[Vapi] ✅ Building assistant for: "${business.name}" | location: "${location.name || location.id}"`);
+  console.log(`[Vapi] Services loaded: ${(services || []).length} | FAQs loaded: ${(faqs || []).length}`);
+  console.log(`[Vapi] Tool URL: ${toolUrl}`);
 
   console.log('🔥🔥🔥 ASSISTANT REQUEST RECEIVED 🔥🔥🔥');
 
@@ -304,7 +324,7 @@ async function toolCheckAvailability(location: LocationWithSecrets, args: { date
     return `No slots available on ${args.date}. Suggest checking the next business day.`;
   }
   const timezone = location.timezone || 'America/New_York';
-  const readable = slots.slice(0, 4).map((iso) =>
+  const readable = slots.slice(0, 4).map((iso: string) =>
     DateTime.fromISO(iso, { zone: timezone }).toFormat('h:mm a'),
   ).join(', ');
   const isoList = slots.slice(0, 4).join(' | ');
