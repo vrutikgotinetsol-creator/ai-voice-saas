@@ -28,12 +28,25 @@ function getCalendarClient() {
   return google.calendar({ version: 'v3', auth });
 }
 
+
+
+
+
+
 export async function getAvailableSlots(location: LocationSchedule, dateStr: string): Promise<string[]> {
   const timezone = location.timezone || 'America/New_York';
   const open_time = location.open_time || '09:00';
   const close_time = location.close_time || '17:00';
-  const days_open = location.days_open;
-  const appointment_duration_min = location.appointment_duration_min || 30;
+
+  // FIX 1: Foolproof parsing for days_open to strictly be numbers
+  let parsedDays = location.days_open;
+  if (typeof parsedDays === 'string') {
+    try { parsedDays = JSON.parse(parsedDays); } catch (e) { parsedDays = [0, 1, 2, 3, 4, 5, 6]; }
+  }
+  const days_open = (Array.isArray(parsedDays) ? parsedDays : [0, 1, 2, 3, 4, 5, 6]).map(Number);
+
+  // FIX 2: Explicitly cast duration to Number to prevent Luxon invalidation
+  const appointment_duration_min = Number(location.appointment_duration_min) || 30;
   const calendar_id = location.calendar_id;
 
   if (!calendar_id) {
@@ -42,10 +55,16 @@ export async function getAvailableSlots(location: LocationSchedule, dateStr: str
 
   const dayStart = DateTime.fromISO(`${dateStr}T${open_time}`, { zone: timezone });
   const dayEnd = DateTime.fromISO(`${dateStr}T${close_time}`, { zone: timezone });
-  if (!dayStart.isValid) throw new Error(`Invalid date: ${dateStr}`);
 
-  const jsWeekday = dayStart.weekday % 7;
-  if (!(days_open || [0, 1, 2, 3, 4, 5, 6]).includes(jsWeekday)) {
+  // FIX 3: Return empty array instead of throwing an error if the AI hallucinates a bad date format
+  if (!dayStart.isValid) {
+    console.error(`[Calendar] Invalid date format from AI: ${dateStr}`);
+    return [];
+  }
+
+  const jsWeekday = dayStart.weekday % 7; // Maps 7 (Sun) to 0, 1 to 1, etc.
+  if (!days_open.includes(jsWeekday)) {
+    console.log(`[Calendar] No slots: Weekday ${jsWeekday} is not in days_open: [${days_open}]`);
     return [];
   }
 
@@ -58,6 +77,12 @@ export async function getAvailableSlots(location: LocationSchedule, dateStr: str
       items: [{ id: calendar_id }],
     },
   });
+
+  // FIX 4: Catch hidden Calendar permission errors
+  const calendarErrors = fb.data.calendars?.[calendar_id]?.errors;
+  if (calendarErrors) {
+    console.error(`[Calendar API Error] The Service Account lacks permission to view ${calendar_id}:`, calendarErrors);
+  }
 
   const busy = fb.data.calendars?.[calendar_id]?.busy || [];
   const now = DateTime.now();
@@ -74,25 +99,33 @@ export async function getAvailableSlots(location: LocationSchedule, dateStr: str
     if (!overlaps && cursor > now) slots.push(cursor.toISO()!);
     cursor = slotEnd;
   }
+
+  console.log(`[Calendar] Generated ${slots.length} available slots for ${dateStr}`);
   return slots;
 }
 
+// Don't forget to fix the duration typing in your mock function as well!
 function generateMockSlots(location: LocationSchedule, dateStr: string): string[] {
   const timezone = location.timezone || 'America/New_York';
   const open_time = location.open_time || '09:00';
   const close_time = location.close_time || '17:00';
-  const appointment_duration_min = location.appointment_duration_min || 30;
+
+  // FIX: Cast to number
+  const appointment_duration_min = Number(location.appointment_duration_min) || 30;
+
   const dayStart = DateTime.fromISO(`${dateStr}T${open_time}`, { zone: timezone });
   const dayEnd = DateTime.fromISO(`${dateStr}T${close_time}`, { zone: timezone });
   const now = DateTime.now();
   const slots: string[] = [];
   let cursor = dayStart;
+
   while (cursor.plus({ minutes: appointment_duration_min }) <= dayEnd) {
     if (cursor > now) slots.push(cursor.toISO()!);
     cursor = cursor.plus({ minutes: appointment_duration_min });
   }
   return slots.filter((_, i) => i % 3 !== 1).slice(0, 6);
 }
+
 
 export async function createCalendarEvent(
   location: LocationSchedule,
@@ -137,7 +170,7 @@ export async function deleteCalendarEvent(
   const calendar = getCalendarClient();
   await calendar.events
     .delete({ calendarId: location.calendar_id, eventId: calendarEventId })
-    .catch(() => {});
+    .catch(() => { });
 }
 
 export async function updateCalendarEventTime(
