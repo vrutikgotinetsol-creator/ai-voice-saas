@@ -166,7 +166,7 @@ async function handleAssistantRequest(_req: Request, res: Response, msg: Record<
       firstMessage: `Thank you for calling ${business.name}. This is ${business.agent_name || 'Riya'}. How can I help you today?`,
       model: {
         provider: 'anthropic',
-        model: 'claude-haiku-4-5-20251001',
+        model: 'claude-3-5-haiku-20241022',
         messages: [{ role: 'system', content: buildSystemPrompt(business, location, services || [], faqs || []) }],
         tools: buildTools(toolUrl),
         temperature: 0.3,
@@ -184,7 +184,7 @@ function fallbackAssistant() {
       firstMessage: 'Hello, thanks for calling. We are getting set up — please try again shortly.',
       model: {
         provider: 'anthropic',
-        model: 'claude-haiku-4-5-20251001',
+        model: 'claude-3-5-haiku-20241022',
         messages: [{ role: 'system', content: 'Business not configured. Politely take name and number for follow-up.' }],
       },
       voice: { provider: 'vapi', voiceId: 'Elliot' },
@@ -199,7 +199,7 @@ function inactiveAssistant() {
       firstMessage: `Thanks for calling. We're temporarily unable to take calls — please try again later.`,
       model: {
         provider: 'anthropic',
-        model: 'claude-haiku-4-5-20251001',
+        model: 'claude-3-5-haiku-20241022',
         messages: [{ role: 'system', content: 'Account inactive. Politely tell caller to try again later.' }],
       },
       voice: { provider: 'vapi', voiceId: 'Elliot' },
